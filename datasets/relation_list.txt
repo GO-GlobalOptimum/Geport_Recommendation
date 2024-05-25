@@ -1,0 +1,13 @@
+relation remap_id
+isPublic 0
+tag#1 1
+tag#2 2
+tag#3 3
+tag#4 4
+tag#5 5
+isComment 6
+category 7
+author 8
+age 9
+gender 10
+mbti 11

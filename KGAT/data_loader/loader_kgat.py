@@ -152,5 +152,3 @@ class DataLoaderKGAT(DataLoaderBase):
         logging.info('n_cf_test:         %d' % self.n_cf_test)
 
         logging.info('n_kg_train:        %d' % self.n_kg_train)
-
-
