@@ -48,5 +48,3 @@ db.close()
 
 
 # kg_final.txt에 저장
-
-
