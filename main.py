@@ -1,6 +1,28 @@
 from fastapi import FastAPI, BackgroundTasks
 import torch
 from KGAT import main_kgat
+import boto3
+import os
+from datetime import datetime
+from dotenv import load_dotenv
+import pytz
+
+load_dotenv()
+
+service_name = 's3'
+endpoint_url = 'https://kr.object.ncloudstorage.com'
+region_name = 'kr-standard'
+access_key = os.getenv('NCLOUD_ACCESS_KEY')
+secret_key = os.getenv('NCLOUD_SECRET_KEY')
+
+# boto3 클라이언트 생성
+s3_client = boto3.client(
+    service_name,
+    endpoint_url=endpoint_url,
+    region_name=region_name,
+    aws_access_key_id=access_key,
+    aws_secret_access_key=secret_key
+)
 
 app = FastAPI()
 
@@ -29,35 +51,51 @@ async def get_predict(user_id: int):
 
 	return: dict
 	'''
-	# with torch.no_grad():
-	# 	batch_scores = model(user_id, item_ids, mode='predict')
-	# batch_scores = batch_scores.cpu()
-	pass
+	top500 = main_kgat.predict_top500(model, user_id)
+	print(top500)
+	await save_predictions_to_redis_cache()
+
+	return top500
 
 async def train():
-	data = await data_preprocessing()
-	model, report = await model_training(data)
-	model_url = await save_model_to_cloud_storage(model)
-	await alert_slack_channel(model_url, report)
+	await data_preprocessing()
+	# report = await model_training()
+	# print(report)
+	# model_url = await save_model_to_cloud_storage()
+	# print(model_url)
+	# await alert_slack_channel(model_url, report)
+	await start_model()
 
 async def data_preprocessing():
 	'''
 	database에서 데이터를 가져와서 학습에 적합한 형태로 변환
+	test_datasets에 저장 + object storage에 저장
 	'''
 	pass
 
-async def model_training(data):
+async def model_training():
 	'''
 	전처리 시킨 데이터를 이용하여 모델을 학습
 	'''
-	main_kgat.train()
-	pass
+	return main_kgat.train()
+	
 
-async def save_model_to_cloud_storage(model):
+async def save_model_to_cloud_storage():
 	'''
 	학습된 모델을 클라우드 스토리지에 저장
 	'''
-	pass
+	destination_blob_name = "rec_models/" + str(datetime.now(pytz.timezone('Asia/Seoul'))) + ".pth"
+	bucket_name = "geport"  # 네이버 클라우드 버킷 이름
+
+    # 이미지를 BytesIO 객체로 변환
+	with open("trained_model/model_epoch1.pth", 'rb') as model_file:
+		s3_client.put_object(
+            Bucket=bucket_name,
+            Key=destination_blob_name,
+            Body=model_file,
+            ACL='public-read'  # public 접근 가능하도록 설정
+        )
+	return f"{endpoint_url}/{bucket_name}/{destination_blob_name}"
 
 async def alert_slack_channel():
 	'''
@@ -66,11 +104,6 @@ async def alert_slack_channel():
 	'''
 	pass
 
-async def generate_predictions_top_500(model):
-	'''
-	학습된 모델을 이용하여 모든 유저의 상위 500개의 예측값을 생성
-	'''
-	pass
 
 async def save_predictions_to_redis_cache():
 	'''
@@ -89,6 +122,6 @@ async def start_model():
 	torch.cuda.empty_cache()
 
 	# 최신 모델 로드
-	model = torch.load('model.pth')
-	model.to('cuda')
+	model = main_kgat.load_new_model()
 	model.eval()
+	print("Model Started!")

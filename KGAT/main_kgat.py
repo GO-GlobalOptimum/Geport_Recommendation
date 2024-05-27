@@ -190,7 +190,7 @@ def train():
                 break
 
             if metrics_list[k_min]['recall'].index(best_recall) == len(epoch_list) - 1:
-                save_model(model, args.save_dir, epoch, best_epoch)
+                model_file = save_model(model, args.save_dir, epoch, best_epoch)
                 logging.info('Save model on epoch {:04d}!'.format(epoch))
                 best_epoch = epoch
 
@@ -209,10 +209,41 @@ def train():
     best_metrics = metrics_df.loc[metrics_df['epoch_idx'] == best_epoch].iloc[0].to_dict()
     logging.info('Best CF Evaluation: Epoch {:04d} | Precision [{:.4f}, {:.4f}], Recall [{:.4f}, {:.4f}], NDCG [{:.4f}, {:.4f}]'.format(
         int(best_metrics['epoch_idx']), best_metrics['precision@{}'.format(k_min)], best_metrics['precision@{}'.format(k_max)], best_metrics['recall@{}'.format(k_min)], best_metrics['recall@{}'.format(k_max)], best_metrics['ndcg@{}'.format(k_min)], best_metrics['ndcg@{}'.format(k_max)]))
+    
+    # 모델 학습 보고서 string으로 반환
+    return model_file, metrics_df
+
+def load_new_model():
+    args = parse_kgat_args()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    data = DataLoaderKGAT(args, logging)
+    model = KGAT(args, data.n_users, data.n_entities, data.n_relations)
+    model = load_model(model, args.pretrain_model_path)
+    model.to(device)
+
+    return model
+
+def predict_top500(model, user_id):
+    args = parse_kgat_args()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    data = DataLoaderKGAT(args, logging)
+    user_ids = torch.LongTensor([user_id]).to(device)
+    n_items = data.n_items
+    item_ids = torch.arange(n_items, dtype=torch.long).to(device)
+
+    with torch.no_grad():
+        scores = model(user_ids, item_ids, mode='predict')
+    scores = scores.cpu().numpy()
+
+    top500_indices = np.argsort(-scores[0])[:500]  # 상위 500개 아이템 인덱스
+
+    return top500_indices
 
 
-def predict(args):
+def predict():
     # GPU / CPU
+    args = parse_kgat_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # load data
@@ -234,7 +265,7 @@ def predict(args):
         metrics_dict[k_min]['precision'], metrics_dict[k_max]['precision'], metrics_dict[k_min]['recall'], metrics_dict[k_max]['recall'], metrics_dict[k_min]['ndcg'], metrics_dict[k_max]['ndcg']))
 
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
     # args = parse_kgat_args()
-    train()
+    # train()
     # predict(args)

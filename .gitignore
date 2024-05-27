@@ -1,2 +1,3 @@
 .venv
-datasets/.env
+.env
+trained_model

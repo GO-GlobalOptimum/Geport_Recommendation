@@ -148,7 +148,7 @@ class DataLoaderBase(object):
 
 
     def generate_kg_batch(self, kg_dict, batch_size, highest_neg_idx):
-        exist_heads = kg_dict.keys()
+        exist_heads = list(kg_dict.keys())
         if batch_size <= len(exist_heads):
             batch_head = random.sample(exist_heads, batch_size)
         else:

@@ -24,6 +24,8 @@ def save_model(model, model_dir, current_epoch, last_best_epoch=None):
         old_model_state_file = os.path.join(model_dir, 'model_epoch{}.pth'.format(last_best_epoch))
         if os.path.exists(old_model_state_file):
             os.system('rm {}'.format(old_model_state_file))
+    
+    return model_state_file
 
 
 def load_model(model, model_path):
