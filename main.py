@@ -1,6 +1,6 @@
 from fastapi import FastAPI, BackgroundTasks
 import torch
-
+from KGAT import main_kgat
 
 app = FastAPI()
 
@@ -50,6 +50,7 @@ async def model_training(data):
 	'''
 	전처리 시킨 데이터를 이용하여 모델을 학습
 	'''
+	main_kgat.train()
 	pass
 
 async def save_model_to_cloud_storage(model):

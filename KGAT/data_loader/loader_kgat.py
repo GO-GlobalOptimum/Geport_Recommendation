@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import scipy.sparse as sp
 
-from data_loader.loader_base import DataLoaderBase
+from KGAT.data_loader.loader_base import DataLoaderBase
 
 
 class DataLoaderKGAT(DataLoaderBase):

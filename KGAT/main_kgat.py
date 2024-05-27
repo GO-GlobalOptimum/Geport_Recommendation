@@ -8,12 +8,12 @@ from tqdm import tqdm
 import torch.nn as nn
 import torch.optim as optim
 
-from model.KGAT import KGAT
-from parser.parser_kgat import *
-from utils.log_helper import *
-from utils.metrics import *
-from utils.model_helper import *
-from data_loader.loader_kgat import DataLoaderKGAT
+from KGAT.model.KGAT import KGAT
+from KGAT.parser.parser_kgat import *
+from KGAT.utils.log_helper import *
+from KGAT.utils.metrics import *
+from KGAT.utils.model_helper import *
+from KGAT.data_loader.loader_kgat import DataLoaderKGAT
 
 
 def evaluate(model, dataloader, Ks, device):
@@ -57,7 +57,8 @@ def evaluate(model, dataloader, Ks, device):
     return cf_scores, metrics_dict
 
 
-def train(args):
+def train():
+    args = parse_kgat_args()
     # seed
     random.seed(args.seed)
     np.random.seed(args.seed)
@@ -233,8 +234,7 @@ def predict(args):
         metrics_dict[k_min]['precision'], metrics_dict[k_max]['precision'], metrics_dict[k_min]['recall'], metrics_dict[k_max]['recall'], metrics_dict[k_min]['ndcg'], metrics_dict[k_max]['ndcg']))
 
 
-
 if __name__ == '__main__':
-    args = parse_kgat_args()
-    train(args)
+    # args = parse_kgat_args()
+    train()
     # predict(args)
