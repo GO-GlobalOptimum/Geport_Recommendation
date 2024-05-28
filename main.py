@@ -4,6 +4,8 @@ from KGAT import main_kgat
 import boto3
 import os
 from datetime import datetime
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
 from dotenv import load_dotenv
 import pytz
 
@@ -14,6 +16,10 @@ endpoint_url = 'https://kr.object.ncloudstorage.com'
 region_name = 'kr-standard'
 access_key = os.getenv('NCLOUD_ACCESS_KEY')
 secret_key = os.getenv('NCLOUD_SECRET_KEY')
+slack_token = os.getenv('SLACK_TOKEN')
+slack_channel = os.getenv('SLACK_CHANNEL')
+
+client = WebClient(token=slack_token)
 
 # boto3 클라이언트 생성
 s3_client = boto3.client(
@@ -27,6 +33,7 @@ s3_client = boto3.client(
 app = FastAPI()
 
 model = None
+n_items = None
 
 @app.get('/train')
 async def get_train(background_tasks: BackgroundTasks):
@@ -43,28 +50,21 @@ async def get_train(background_tasks: BackgroundTasks):
 
 	return {"message": "Started Training!"}
 
+async def train():
+	# await data_preprocessing()
+	# await alert_slack_channel("Data Preprocessing Completed! Starting Model Training...")
+	# await model_training()
+	# url = await save_model_to_cloud_storage()
+	# await alert_slack_channel(f"Model Training Completed! Training Report URL: {url}")
+	await start_model()
+
 @app.get('/predict')
 async def get_predict(user_id: int):
-	'''
-	1. Generate Predictions top 500
-	2. Save Predictions to Redis Cache
-
-	return: dict
-	'''
-	top500 = main_kgat.predict_top500(model, user_id)
-	print(top500)
-	await save_predictions_to_redis_cache()
+	global n_items
+	top500 = main_kgat.predict_top500(model, user_id, n_items).tolist()
+	await save_predictions_to_redis_cache(user_id, top500)
 
 	return top500
-
-async def train():
-	await data_preprocessing()
-	# report = await model_training()
-	# print(report)
-	# model_url = await save_model_to_cloud_storage()
-	# print(model_url)
-	# await alert_slack_channel(model_url, report)
-	await start_model()
 
 async def data_preprocessing():
 	'''
@@ -74,54 +74,63 @@ async def data_preprocessing():
 	pass
 
 async def model_training():
-	'''
-	전처리 시킨 데이터를 이용하여 모델을 학습
-	'''
-	return main_kgat.train()
+	main_kgat.train()
 	
 
 async def save_model_to_cloud_storage():
-	'''
-	학습된 모델을 클라우드 스토리지에 저장
-	'''
-	destination_blob_name = "rec_models/" + str(datetime.now(pytz.timezone('Asia/Seoul'))) + ".pth"
+	destination_blob_name = "rec_models/" + str(datetime.now(pytz.timezone('Asia/Seoul')).date())
 	bucket_name = "geport"  # 네이버 클라우드 버킷 이름
 
-    # 이미지를 BytesIO 객체로 변환
 	with open("trained_model/model_epoch1.pth", 'rb') as model_file:
 		s3_client.put_object(
             Bucket=bucket_name,
-            Key=destination_blob_name,
+            Key=destination_blob_name + "/model_epoch.pth",
             Body=model_file,
-            ACL='public-read'  # public 접근 가능하도록 설정
+            ACL='public-read',
         )
-	return f"{endpoint_url}/{bucket_name}/{destination_blob_name}"
 
-async def alert_slack_channel():
-	'''
-	학습이 완료되었음을 slack 채널에 알림
-	학습 보고서 전송
-	'''
-	pass
+	with open("trained_model/log.log", 'rb') as model_file:
+		s3_client.put_object(
+            Bucket=bucket_name,
+            Key=destination_blob_name + "/log.log",
+            Body=model_file,
+            ACL='public-read',
+        )
 
+	with open("trained_model/metrics.tsv", 'rb') as metrics_file:
+		s3_client.put_object(
+			Bucket=bucket_name,
+			Key=destination_blob_name + "/metrics.tsv",
+			Body=metrics_file,
+			ACL='public-read',
+		)
 
-async def save_predictions_to_redis_cache():
+	return f"{endpoint_url}/{bucket_name}/{destination_blob_name}/metrics.tsv"
+
+async def alert_slack_channel(text: str):
+	try:
+		response = client.chat_postMessage(
+			channel=slack_channel,
+			text=text,
+		)
+	except SlackApiError as e:
+		assert e.response["error"]
+
+async def save_predictions_to_redis_cache(user_id: int, top500: list):
 	'''
 	생성된 예측값을 redis cache에 저장
+	key: user_id
+	value: top500
 	'''
 	pass
 
 async def start_model():
-	'''
-	학습된 모델을 서비스에 적용
-	'''
-
 	# 기존 모델 삭제
-	global model
+	global model, n_items
 	del model
 	torch.cuda.empty_cache()
 
 	# 최신 모델 로드
-	model = main_kgat.load_new_model()
+	model, n_items = main_kgat.load_new_model()
 	model.eval()
-	print("Model Started!")
+	

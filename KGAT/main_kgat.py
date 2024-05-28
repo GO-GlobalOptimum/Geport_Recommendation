@@ -65,8 +65,13 @@ def train():
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed_all(args.seed)
 
-    log_save_id = create_log_id(args.save_dir)
-    logging_config(folder=args.save_dir, name='log{:d}'.format(log_save_id), no_console=False)
+    # log_save_id = create_log_id(args.save_dir)
+    # 기존 로그파일 삭제
+    for file in os.listdir(args.save_dir):
+        if file.endswith('.log'):
+            os.remove(os.path.join(args.save_dir, file))
+
+    logging_config(folder=args.save_dir, name='log', no_console=False)
     logging.info(args)
 
     # GPU / CPU
@@ -209,9 +214,7 @@ def train():
     best_metrics = metrics_df.loc[metrics_df['epoch_idx'] == best_epoch].iloc[0].to_dict()
     logging.info('Best CF Evaluation: Epoch {:04d} | Precision [{:.4f}, {:.4f}], Recall [{:.4f}, {:.4f}], NDCG [{:.4f}, {:.4f}]'.format(
         int(best_metrics['epoch_idx']), best_metrics['precision@{}'.format(k_min)], best_metrics['precision@{}'.format(k_max)], best_metrics['recall@{}'.format(k_min)], best_metrics['recall@{}'.format(k_max)], best_metrics['ndcg@{}'.format(k_min)], best_metrics['ndcg@{}'.format(k_max)]))
-    
-    # 모델 학습 보고서 string으로 반환
-    return model_file, metrics_df
+
 
 def load_new_model():
     args = parse_kgat_args()
@@ -222,14 +225,14 @@ def load_new_model():
     model = load_model(model, args.pretrain_model_path)
     model.to(device)
 
-    return model
+    return model, data.n_items
 
-def predict_top500(model, user_id):
-    args = parse_kgat_args()
+def predict_top500(model, user_id, n_items):
+    # args = parse_kgat_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    data = DataLoaderKGAT(args, logging)
+    # data = DataLoaderKGAT(args, logging)
     user_ids = torch.LongTensor([user_id]).to(device)
-    n_items = data.n_items
+    # n_items = data.n_items
     item_ids = torch.arange(n_items, dtype=torch.long).to(device)
 
     with torch.no_grad():
