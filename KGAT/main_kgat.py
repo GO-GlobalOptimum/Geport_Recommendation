@@ -228,20 +228,21 @@ def load_new_model():
     return model, data.n_items
 
 def predict_top500(model, user_id, n_items):
-    # args = parse_kgat_args()
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # data = DataLoaderKGAT(args, logging)
+
     user_ids = torch.LongTensor([user_id]).to(device)
-    # n_items = data.n_items
     item_ids = torch.arange(n_items, dtype=torch.long).to(device)
 
     with torch.no_grad():
         scores = model(user_ids, item_ids, mode='predict')
     scores = scores.cpu().numpy()
 
-    top500_indices = np.argsort(-scores[0])[:500]  # 상위 500개 아이템 인덱스
+    top500_indices = np.argsort(-scores[0])[:500]
 
-    return top500_indices
+    top500_original_ids = [idx - 100000 for idx in top500_indices]
+
+    return top500_original_ids
 
 
 def predict():

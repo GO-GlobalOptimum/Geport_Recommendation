@@ -51,11 +51,11 @@ async def get_train(background_tasks: BackgroundTasks):
 	return {"message": "Started Training!"}
 
 async def train():
-	# await data_preprocessing()
-	# await alert_slack_channel("Data Preprocessing Completed! Starting Model Training...")
-	# await model_training()
-	# url = await save_model_to_cloud_storage()
-	# await alert_slack_channel(f"Model Training Completed! Training Report URL: {url}")
+	await data_preprocessing()
+	await alert_slack_channel("Data Preprocessing Completed! Starting Model Training...")
+	await model_training()
+	url = await save_model_to_cloud_storage()
+	await alert_slack_channel(f"Model Training Completed! Training Report URL: {url}")
 	await start_model()
 
 @app.get('/predict')

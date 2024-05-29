@@ -1,4 +1,3 @@
-entity_id remap_id
 라이프스타일 0
 건강 1
 피트니스 2
@@ -29,3 +28,22 @@ DIY (자가제작) 8
 모바일 27
 동물 28
 심리학 29
+ENTJ 30
+ENTP 31
+ENFJ 32
+ENFP 33
+ESTJ 34
+ESTP 35
+ESFJ 36
+ESFP 37
+INTJ 38
+INTP 39
+INFJ 40
+INFP 41
+ISTJ 42
+ISTP 43
+ISFJ 44
+ISFP 45
+남자 46
+여자 47
+기타 48

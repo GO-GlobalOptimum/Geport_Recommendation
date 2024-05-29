@@ -1,8 +1,7 @@
-relation remap_id
-isPublic 0
-isComment 1
-category 2
-author 3
+is_public 0
+is_comment 1
+category_id 2
+created_by 3
 age 4
 gender 5
 mbti 6
