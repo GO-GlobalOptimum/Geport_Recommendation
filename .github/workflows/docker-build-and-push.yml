@@ -1,0 +1,23 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u taewan2002 --password-stdin
+
+      - name: Build Docker image
+        run: docker build -t taewan2002/recsys:latest .
+
+      - name: Push Docker image
+        run: docker push taewan2002/recsys:latest
