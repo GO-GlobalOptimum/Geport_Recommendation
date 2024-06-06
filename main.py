@@ -161,7 +161,7 @@ def get_post_list(top500: list):
 
 	post_result = db.execute(text("""
 		SELECT post_id, title, content, is_public, is_comment, member_id
-		FROM post
+		FROM Post
 		WHERE post_id IN :post_ids
 	"""), {"post_ids": top500})
 

@@ -30,13 +30,13 @@ def data_preprocessing():
     db = SessionLocal()
 
     # member 테이블 데이터 조회
-    members_result = db.execute(text("SELECT member_id, age, gender, mbti FROM member"))
+    members_result = db.execute(text("SELECT member_id, age, gender, mbti FROM Member"))
     posts_result = db.execute(text("""
-        SELECT post.post_id, post.is_public, post.is_comment, post.member_id, category_post.category_id AS category_id
-        FROM post
-        LEFT JOIN category_post ON post.post_id = category_post.post_id
+        SELECT Post.post_id, Post.is_public, Post.is_comment, Post.member_id, Category_post.category_id AS category_id
+        FROM Post
+        LEFT JOIN Category_post ON Post.post_id = Category_post.post_id
     """))
-    view_result = db.execute(text("SELECT member_id, post_id FROM view"))
+    view_result = db.execute(text("SELECT member_id, post_id FROM View"))
 
     # 컬럼 이름 가져오기 (keys() 메서드 사용 후 리스트로 변환)
     member_columns = list(members_result.keys())
