@@ -72,7 +72,7 @@ async def get_predict(user_id: int):
 	top500 = top500.tolist()
 	print(top500)
 
-	await save_predictions_to_redis_cache(user_id, top500)
+	save_predictions_to_redis_cache(user_id, top500)
 
 	return top500
 
