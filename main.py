@@ -54,8 +54,11 @@ async def train():
 	await data_preprocessing()
 	await alert_slack_channel("Data Preprocessing Completed! Starting Model Training...")
 	await model_training()
-	url = await save_model_to_cloud_storage()
-	await alert_slack_channel(f"Model Training Completed! Training Report URL: {url}")
+	try:
+		url = await save_model_to_cloud_storage()
+		await alert_slack_channel(f"Model Training Completed! Training Report URL: {url}")
+	except Exception as e:
+		await alert_slack_channel(f"Model Training Completed! But an error occurred while saving the model to cloud storage. Error: {e}")
 	await start_model()
 
 @app.get('/predict')
