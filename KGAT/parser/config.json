@@ -1,6 +1,6 @@
 {
     "seed": 2019,
-    "data_name": "test_datasets",
+    "data_name": "test",
     "data_dir": "",
     "use_pretrain": 0,
     "pretrain_embedding_dir": "datasets/pretrain/",

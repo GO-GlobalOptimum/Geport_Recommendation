@@ -3,6 +3,7 @@ import torch
 from KGAT import main_kgat
 import boto3
 import os
+import datasets.preprocessing as preprocessing
 from datetime import datetime
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
@@ -64,22 +65,20 @@ async def train():
 @app.get('/predict')
 async def get_predict(user_id: int):
 	global n_items
-	top500 = main_kgat.predict_top500(model, user_id, n_items).tolist()
+	top500 = main_kgat.predict_top500(model, user_id, n_items)
+	top500 = top500.tolist()
+	print(top500)
+
 	await save_predictions_to_redis_cache(user_id, top500)
 
 	return top500
 
 async def data_preprocessing():
-	'''
-	database에서 데이터를 가져와서 학습에 적합한 형태로 변환
-	test_datasets에 저장 + object storage에 저장
-	'''
-	pass
+	preprocessing.data_preprocessing()
 
 async def model_training():
 	main_kgat.train()
 	
-
 async def save_model_to_cloud_storage():
 	destination_blob_name = "rec_models/" + str(datetime.now(pytz.timezone('Asia/Seoul')).date())
 	bucket_name = "geport"  # 네이버 클라우드 버킷 이름

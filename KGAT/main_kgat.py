@@ -242,7 +242,7 @@ def predict_top500(model, user_id, n_items):
 
     top500_original_ids = [idx - 100000 for idx in top500_indices]
 
-    return top500_original_ids
+    return top500_indices
 
 
 def predict():
