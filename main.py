@@ -68,12 +68,11 @@ def train():
 
 @app.get('/predict')
 async def get_predict(user_id: int):
-	# global n_items
-	# top500 = main_kgat.predict_top500(model, user_id, n_items)
-	# top500 = top500.tolist()
+	global n_items
+	top500 = main_kgat.predict_top500(model, user_id, n_items)
+	top500 = top500.tolist()
 
 	# save_predictions_to_redis_cache(user_id, top500)
-	top500 = [100000, 100001, 100002, 100003, 100004, 1, 2, 3, 4, 5]
 	post_list = get_post_list(top500)
 
 	return post_list
