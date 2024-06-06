@@ -52,7 +52,7 @@ async def get_train(background_tasks: BackgroundTasks):
 	return {"message": "Started Training!"}
 
 async def train():
-	await data_preprocessing()
+	# await data_preprocessing()
 	await alert_slack_channel("Data Preprocessing Completed! Starting Model Training...")
 	await model_training()
 	try:

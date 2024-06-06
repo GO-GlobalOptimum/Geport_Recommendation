@@ -240,7 +240,7 @@ def predict_top500(model, user_id, n_items):
 
     top500_indices = np.argsort(-scores[0])[:500]
 
-    top500_original_ids = [idx - 100000 for idx in top500_indices]
+    # top500_original_ids = [idx - 100000 for idx in top500_indices]
 
     return top500_indices
 
