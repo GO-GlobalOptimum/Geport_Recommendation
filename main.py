@@ -8,6 +8,7 @@ from datetime import datetime
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from dotenv import load_dotenv
+import time
 import pytz
 
 load_dotenv()
@@ -37,7 +38,7 @@ model = None
 n_items = None
 
 @app.get('/train')
-async def get_train(background_tasks: BackgroundTasks):
+def get_train(background_tasks: BackgroundTasks):
 	'''
 	Background Task
 
@@ -51,16 +52,18 @@ async def get_train(background_tasks: BackgroundTasks):
 
 	return {"message": "Started Training!"}
 
-async def train():
+def train():
 	# await data_preprocessing()
-	await alert_slack_channel("Data Preprocessing Completed! Starting Model Training...")
-	await model_training()
+	# await alert_slack_channel("Data Preprocessing Completed! Starting Model Training...")
+	print("Data Preprocessing Completed! Starting Model Training...")
+	model_training()
+	print("Model Training Completed! Saving Model to Cloud Storage...")
 	try:
-		url = await save_model_to_cloud_storage()
-		await alert_slack_channel(f"Model Training Completed! Training Report URL: {url}")
+		url = save_model_to_cloud_storage()
+		alert_slack_channel(f"Model Training Completed! Training Report URL: {url}")
 	except Exception as e:
-		await alert_slack_channel(f"Model Training Completed! But an error occurred while saving the model to cloud storage. Error: {e}")
-	await start_model()
+		alert_slack_channel(f"Model Training Completed! But an error occurred while saving the model to cloud storage. Error: {e}")
+	start_model()
 
 @app.get('/predict')
 async def get_predict(user_id: int):
@@ -73,43 +76,46 @@ async def get_predict(user_id: int):
 
 	return top500
 
-async def data_preprocessing():
+def data_preprocessing():
 	preprocessing.data_preprocessing()
 
-async def model_training():
+def model_training():
 	main_kgat.train()
 	
-async def save_model_to_cloud_storage():
+def save_model_to_cloud_storage():
 	destination_blob_name = "rec_models/" + str(datetime.now(pytz.timezone('Asia/Seoul')).date())
 	bucket_name = "geport"  # 네이버 클라우드 버킷 이름
 
-	with open("trained_model/model_epoch1.pth", 'rb') as model_file:
+	with open("trained_model/model_epoch1.pth", 'rb') as model_file1:
 		s3_client.put_object(
             Bucket=bucket_name,
             Key=destination_blob_name + "/model_epoch.pth",
-            Body=model_file,
+            Body=model_file1,
             ACL='public-read',
         )
+		model_file1.seek(0)
 
-	with open("trained_model/log.log", 'rb') as model_file:
-		s3_client.put_object(
-            Bucket=bucket_name,
-            Key=destination_blob_name + "/log.log",
-            Body=model_file,
-            ACL='public-read',
-        )
+	# with open("trained_model/log.log", 'rb') as model_file2:
+	# 	s3_client.put_object(
+    #         Bucket=bucket_name,
+    #         Key=destination_blob_name + "/log.log",
+    #         Body=model_file2,
+    #         ACL='public-read',
+    #     )
+	# 	model_file2.seek(0)
 
-	with open("trained_model/metrics.tsv", 'rb') as metrics_file:
+	with open("trained_model/metrics.tsv", 'rb') as metrics_file3:
 		s3_client.put_object(
 			Bucket=bucket_name,
 			Key=destination_blob_name + "/metrics.tsv",
-			Body=metrics_file,
+			Body=metrics_file3,
 			ACL='public-read',
 		)
+		metrics_file3.seek(0)
 
 	return f"{endpoint_url}/{bucket_name}/{destination_blob_name}/metrics.tsv"
 
-async def alert_slack_channel(text: str):
+def alert_slack_channel(text: str):
 	try:
 		response = client.chat_postMessage(
 			channel=slack_channel,
@@ -118,7 +124,7 @@ async def alert_slack_channel(text: str):
 	except SlackApiError as e:
 		assert e.response["error"]
 
-async def save_predictions_to_redis_cache(user_id: int, top500: list):
+def save_predictions_to_redis_cache(user_id: int, top500: list):
 	'''
 	생성된 예측값을 redis cache에 저장
 	key: user_id
@@ -126,7 +132,7 @@ async def save_predictions_to_redis_cache(user_id: int, top500: list):
 	'''
 	pass
 
-async def start_model():
+def start_model():
 	# 기존 모델 삭제
 	global model, n_items
 	del model
