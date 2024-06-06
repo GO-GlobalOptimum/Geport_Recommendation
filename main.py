@@ -160,7 +160,7 @@ def get_post_list(top500: list):
 	# post 테이블 데이터 조회
 
 	post_result = db.execute(text("""
-		SELECT post_id, title, is_public, is_comment, member_id
+		SELECT post_id, title, isPublic, isComment, createdBy, commentCount, viewCount, likeCount, thumbnailText, postContent
 		FROM Post
 		WHERE post_id IN :post_ids
 	"""), {"post_ids": top500})
