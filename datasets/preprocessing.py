@@ -12,7 +12,7 @@ def data_preprocessing():
     env_path = os.path.join(current_dir, '..', '.env')
 
     # .env 파일 로드
-    load_dotenv()
+    load_dotenv(dotenv_path=env_path)
 
     # 환경 변수에서 사용자와 주소 가져오기
     db_user = os.getenv("DB_USER")

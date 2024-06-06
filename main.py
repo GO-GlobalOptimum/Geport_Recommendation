@@ -8,7 +8,8 @@ from datetime import datetime
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from dotenv import load_dotenv
-import time
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker
 import pytz
 
 load_dotenv()
@@ -67,14 +68,15 @@ def train():
 
 @app.get('/predict')
 async def get_predict(user_id: int):
-	global n_items
-	top500 = main_kgat.predict_top500(model, user_id, n_items)
-	top500 = top500.tolist()
-	print(top500)
+	# global n_items
+	# top500 = main_kgat.predict_top500(model, user_id, n_items)
+	# top500 = top500.tolist()
 
-	save_predictions_to_redis_cache(user_id, top500)
+	# save_predictions_to_redis_cache(user_id, top500)
+	top500 = [100000, 100001, 100002, 100003, 100004, 1, 2, 3, 4, 5]
+	post_list = get_post_list(top500)
 
-	return top500
+	return post_list
 
 def data_preprocessing():
 	preprocessing.data_preprocessing()
@@ -142,3 +144,36 @@ def start_model():
 	model, n_items = main_kgat.load_new_model()
 	model.eval()
 	
+def get_post_list(top500: list):
+
+	db_user = os.getenv("DB_USER")
+	db_address = os.getenv("DB_ADDRESS")
+	db_name = os.getenv("DB_NAME")
+	
+	DB_URL = f'mysql+pymysql://{db_user}@{db_address}/{db_name}'
+	engine = create_engine(DB_URL, pool_recycle=3600)
+	SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+    # 데이터베이스 세션 생성
+	db = SessionLocal()
+
+	# post 테이블 데이터 조회
+
+	post_result = db.execute(text("""
+		SELECT post_id, title, content, is_public, is_comment, member_id
+		FROM post
+		WHERE post_id IN :post_ids
+	"""), {"post_ids": top500})
+
+	post_columns = list(post_result.keys())
+	posts = post_result.fetchall()
+
+	post_dicts = [dict(zip(post_columns, post)) for post in posts]
+
+	for post_dict in post_dicts:
+		print(post_dict)
+		print("-" * 20)
+
+	db.close()
+	
+	return post_dicts
