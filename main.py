@@ -54,7 +54,7 @@ def get_train(background_tasks: BackgroundTasks):
 
 def train():
 	# await data_preprocessing()
-	# await alert_slack_channel("Data Preprocessing Completed! Starting Model Training...")
+	alert_slack_channel("Data Preprocessing Completed! Starting Model Training...")
 	print("Data Preprocessing Completed! Starting Model Training...")
 	model_training()
 	print("Model Training Completed! Saving Model to Cloud Storage...")
