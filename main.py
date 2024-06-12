@@ -54,7 +54,7 @@ def get_train(background_tasks: BackgroundTasks):
 	return {"message": "Started Training!"}
 
 def train():
-	# await data_preprocessing()
+	# data_preprocessing()
 	alert_slack_channel("Data Preprocessing Completed! Starting Model Training...")
 	print("Data Preprocessing Completed! Starting Model Training...")
 	model_training()
@@ -69,10 +69,12 @@ def train():
 @app.get('/predict')
 async def get_predict(user_id: int):
 	global n_items
-	top500 = main_kgat.predict_top500(model, user_id, n_items)
-	top500 = top500.tolist()
+	# top500 = main_kgat.predict_top500(model, user_id, n_items)
+	# top500 = top500.tolist()
 
 	# save_predictions_to_redis_cache(user_id, top500)
+
+	top500 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 	post_list = get_post_list(top500)
 
 	return post_list
@@ -146,10 +148,11 @@ def start_model():
 def get_post_list(top500: list):
 
 	db_user = os.getenv("DB_USER")
+	db_password = os.getenv("DB_PASSWORD")
 	db_address = os.getenv("DB_ADDRESS")
 	db_name = os.getenv("DB_NAME")
 	
-	DB_URL = f'mysql+pymysql://{db_user}@{db_address}/{db_name}'
+	DB_URL = f'mysql+pymysql://{db_user}:{db_password}@{db_address}/{db_name}'
 	engine = create_engine(DB_URL, pool_recycle=3600)
 	SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -158,9 +161,11 @@ def get_post_list(top500: list):
 
 	# post 테이블 데이터 조회
 
+	# 더미
+	top500 = [25, 26, 27, 28, 29, 30]
+
 	post_result = db.execute(text("""
-		SELECT post_id, title, isPublic, isComment, createdBy, commentCount, viewsCount, likeCount, thumbnailText, postContent
-		FROM Post
+		SELECT * FROM Post
 		WHERE post_id IN :post_ids
 	"""), {"post_ids": top500})
 
