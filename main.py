@@ -156,6 +156,8 @@ def get_post_list(top500: list):
 	engine = create_engine(DB_URL, pool_recycle=3600)
 	SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+	print(DB_URL)
+
     # 데이터베이스 세션 생성
 	db = SessionLocal()
 
