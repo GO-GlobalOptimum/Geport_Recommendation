@@ -10,6 +10,7 @@ from slack_sdk.errors import SlackApiError
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
+from fastapi.middleware.cors import CORSMiddleware
 import pytz
 
 load_dotenv()
@@ -21,6 +22,7 @@ access_key = os.getenv('NCLOUD_ACCESS_KEY')
 secret_key = os.getenv('NCLOUD_SECRET_KEY')
 slack_token = os.getenv('SLACK_TOKEN')
 slack_channel = os.getenv('SLACK_CHANNEL')
+
 
 client = WebClient(token=slack_token)
 
@@ -34,6 +36,14 @@ s3_client = boto3.client(
 )
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 model = None
 n_items = None
